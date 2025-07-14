@@ -23,7 +23,7 @@ pip install git+https://github.com/woonyee28/CausalSHAP.git
 
 ## Usage
 ```
-from fast_causal_inference import FastCausalInference
+from fast_causal_shap.core import FastCausalSHAP
 
 # Predict probabilities and assign to training data
 predicted_probabilities = model.predict_proba(X_train)[:,1]
