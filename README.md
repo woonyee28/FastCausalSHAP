@@ -3,6 +3,7 @@
 [![Docs](https://github.com/woonyee28/FastCausalSHAP/actions/workflows/pages/pages-build-deployment/badge.svg)](https://woonyee28.github.io/FastCausalSHAP/)&nbsp;&nbsp;
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://github.com/woonyee28/FastCausalSHAP/actions/workflows/test-python-versions.yml/badge.svg)](https://github.com/woonyee28/FastCausalSHAP/actions/workflows/test-python-versions.yml)
 
 Fast Causal SHAP is a Python package designed for efficient and interpretable SHAP value computation in causal inference tasks. It integrates seamlessly with various causal inference frameworks and enables feature attribution with awareness of causal dependencies.
 
