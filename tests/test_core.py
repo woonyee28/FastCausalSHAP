@@ -1,13 +1,14 @@
+import json
+import os
+import tempfile
 import unittest
+
+import networkx as nx
 import numpy as np
 import pandas as pd
-import networkx as nx
-import json
-import tempfile
-import os
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression
 
 from fast_causal_shap.core import FastCausalSHAP
 

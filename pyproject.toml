@@ -34,6 +34,9 @@ dev = [
 line-length = 88
 target-version = ['py38', 'py39', 'py310', 'py311', 'py312', 'py313', 'py314']
 
+[tool.isort]
+profile = "black"
+
 [project.urls]
 Homepage = "https://github.com/woonyee28/CausalSHAP"
 Issues = "https://github.com/woonyee28/CausalSHAP/issues"
