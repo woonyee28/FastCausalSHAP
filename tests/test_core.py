@@ -348,8 +348,10 @@ class TestFastCausalSHAP(unittest.TestCase):
             temp_file = f.name
 
         try:
-            with self.assertRaises(json.JSONDecodeError):
+            # Implementation wraps JSONDecodeError in ValueError
+            with self.assertRaises(ValueError) as context:
                 self.fast_causal_shap.load_causal_strengths(temp_file)
+            self.assertIn("Invalid JSON file", str(context.exception))
         finally:
             os.unlink(temp_file)
 
@@ -360,10 +362,10 @@ class TestFastCausalSHAP(unittest.TestCase):
             temp_file = f.name
 
         try:
-            gamma = self.fast_causal_shap.load_causal_strengths(temp_file)
-            self.assertIsInstance(gamma, dict)
-            # All gamma values should be 0 for empty effects
-            self.assertTrue(all(v == 0.0 for v in gamma.values()))
+            # Implementation now raises ValueError for empty lists
+            with self.assertRaises(ValueError) as context:
+                self.fast_causal_shap.load_causal_strengths(temp_file)
+            self.assertIn("empty list", str(context.exception))
         finally:
             os.unlink(temp_file)
 
