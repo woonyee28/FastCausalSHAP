@@ -14,6 +14,41 @@ logger = logging.getLogger(__name__)
 
 class FastCausalSHAP:
     def __init__(self, data: pd.DataFrame, model: Any, target_variable: str) -> None:
+        """
+        Initialize FastCausalSHAP with data, model, and target variable.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The dataset containing features and target variable.
+            Must not be empty.
+        model : Any
+            A fitted sklearn model with predict() method and feature_names_in_ attribute
+            Can be a classifier or regressor.
+        target_variable : str
+            The name of the target variable column in the data.
+            Must exist in data.columns.
+
+        Raises
+        ------
+        TypeError
+            If data is not a pandas DataFrame.
+        ValueError
+            If data is empty or target_variable not in data columns.
+        AttributeError
+            If model doesn't have required methods/attributes.
+
+        Examples
+        --------
+        >>> from sklearn.ensemble import RandomForestRegressor
+        >>> import pandas as pd
+        >>>
+        >>> data = pd.DataFrame({'X1': [1, 2, 3], 'X2': [4, 5, 6], 'Y': [7, 8, 9]})
+        >>> model = RandomForestRegressor()
+        >>> model.fit(data[['X1', 'X2']], data['Y'])
+        >>>
+        >>> shap = FastCausalSHAP(data, model, 'Y')
+        """
         if not isinstance(data, pd.DataFrame):
             raise TypeError("data must be a pandas DataFrame")
 
