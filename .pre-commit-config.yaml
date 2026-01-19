@@ -26,3 +26,14 @@ repos:
     rev: 7.1.1
     hooks:
       - id: flake8
+
+  # Pytest - run tests
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
