@@ -179,7 +179,7 @@ class FastCausalSHAP:
         return order
 
     def get_parents(self, feature):
-        """Returns the list of parent features for a given feature in the causal graph."""
+        """Returns the parent features for a given feature in the causal graph."""
         return list(self.ida_graph.predecessors(feature))
 
     def sample_marginal(self, feature):
@@ -285,7 +285,8 @@ class FastCausalSHAP:
 
         # Track contributions using dynamic programming (EXTEND-like logic in TreeSHAP)
         # m_values will accumulate contributions from subsets (use combinatorial logic)
-        # Essentially, values in m_values[k] represent how many ways there are to select k nodes from the path seen so far.
+        # Essentially, values in m_values[k] represent how many ways there are
+        # to select k nodes from the path seen so far.
         for feature in sorted_features:
             if feature not in self.causal_paths:
                 continue

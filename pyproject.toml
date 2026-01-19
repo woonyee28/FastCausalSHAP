@@ -7,7 +7,7 @@ name = "fast-causal-shap"
 version = "0.1.2"
 description = "A Python package for efficient causal SHAP computations"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 license = {text = "MIT"}  
 authors = [
     {name = "woonyee28", email = "ngnwy289@gmail.com"},
@@ -32,10 +32,16 @@ dev = [
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312', 'py313', 'py314']
+target-version = ['py39', 'py310', 'py311', 'py312', 'py313', 'py314']
 
 [tool.isort]
 profile = "black"
+
+[tool.mypy]
+files = "fast_causal_shap"
+python_version = "3.9"
+ignore_missing_imports = true
+
 
 [project.urls]
 Homepage = "https://github.com/woonyee28/CausalSHAP"
