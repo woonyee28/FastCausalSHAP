@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 from math import factorial
+from typing import Any, Dict, List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
@@ -9,22 +10,27 @@ from sklearn.linear_model import LinearRegression
 
 
 class FastCausalSHAP:
-    def __init__(self, data, model, target_variable):
-        self.data = data
-        self.model = model
-        self.gamma = None
-        self.target_variable = target_variable
-        self.ida_graph = None
-        self.regression_models = {}
-        self.feature_depths = {}
-        self.path_cache = {}
-        self.causal_paths = {}
+    def __init__(self, data, model, target_variable) -> None:
+        self.data: pd.DataFrame = data
+        self.model: Any = model
+        self.gamma: Optional[Dict[str, float]] = None
+        self.target_variable: str = target_variable
+        self.ida_graph: Optional[nx.DiGraph] = None
+        self.regression_models: Dict[Tuple[str, Tuple[str, ...]], Tuple[Any, float]] = (
+            {}
+        )
+        self.feature_depths: Dict[str, int] = {}
+        self.path_cache: Dict[Any, float] = {}
+        self.causal_paths: Dict[str, List[List[str]]] = {}
 
-    def remove_cycles(self):
+    def remove_cycles(self) -> List[Tuple[str, str, float]]:
         """
         Detects cycles in the graph and removes edges causing cycles.
         Returns a list of removed edges.
         """
+        if self.ida_graph is None:
+            return []
+
         G = self.ida_graph.copy()
         removed_edges = []
 
@@ -75,7 +81,7 @@ class FastCausalSHAP:
         self.ida_graph = G
         return removed_edges
 
-    def _compute_causal_paths(self):
+    def _compute_causal_paths(self) -> None:
         """Compute and store all causal paths to target for each feature."""
         features = [col for col in self.data.columns if col != self.target_variable]
         for feature in features:
@@ -88,7 +94,7 @@ class FastCausalSHAP:
             except nx.NetworkXNoPath:
                 self.causal_paths[feature] = []
 
-    def load_causal_strengths(self, json_file_path):
+    def load_causal_strengths(self, json_file_path) -> Dict[str, float]:
         with open(json_file_path, "r") as f:
             causal_effects_list = json.load(f)
 
@@ -146,7 +152,7 @@ class FastCausalSHAP:
             }
         return self.gamma
 
-    def _compute_feature_depths(self):
+    def _compute_feature_depths(self) -> None:
         """Compute minimum depth of each feature to target in causal graph."""
         features = [col for col in self.data.columns if col != self.target_variable]
         for feature in features:
@@ -154,17 +160,16 @@ class FastCausalSHAP:
                 all_paths = list(
                     nx.all_simple_paths(self.ida_graph, feature, self.target_variable)
                 )
-                min_depth = float("inf")
-                for path in all_paths:
-                    depth = len(path) - 1
-                    min_depth = min(min_depth, depth)
-                if min_depth != float("inf"):
+                if all_paths:
+                    min_depth = min(len(path) - 1 for path in all_paths)
                     self.feature_depths[feature] = min_depth
             except nx.NetworkXNoPath:
                 continue
 
-    def get_topological_order(self, S):
+    def get_topological_order(self, S) -> List[str]:
         """Returns the topological order of variables after intervening on subset S."""
+        if self.ida_graph is None:
+            return []
         G_intervened = self.ida_graph.copy()
         for feature in S:
             G_intervened.remove_edges_from(list(G_intervened.in_edges(feature)))
@@ -178,15 +183,17 @@ class FastCausalSHAP:
 
         return order
 
-    def get_parents(self, feature):
+    def get_parents(self, feature) -> List[str]:
         """Returns the parent features for a given feature in the causal graph."""
+        if self.ida_graph is None:
+            return []
         return list(self.ida_graph.predecessors(feature))
 
-    def sample_marginal(self, feature):
+    def sample_marginal(self, feature) -> float:
         """Sample a value from the marginal distribution of the specified feature."""
         return self.data[feature].sample(1).iloc[0]
 
-    def sample_conditional(self, feature, parent_values):
+    def sample_conditional(self, feature, parent_values) -> float:
         """Sample a value for a feature conditioned on its parent features."""
         effective_parents = [
             p for p in self.get_parents(feature) if p != self.target_variable
@@ -210,7 +217,7 @@ class FastCausalSHAP:
         sampled_value = np.random.normal(mean, std)
         return sampled_value
 
-    def compute_v_do(self, S, x_S, is_classifier=False):
+    def compute_v_do(self, S, x_S, is_classifier=False) -> float:
         """Compute interventional expectations with caching."""
         cache_key = (
             frozenset(S),
@@ -246,19 +253,23 @@ class FastCausalSHAP:
         else:
             probas = self.model.predict(intervened_data)
 
-        result = np.mean(probas)
+        result = float(np.mean(probas))
         self.path_cache[cache_key] = result
         return result
 
-    def is_on_causal_path(self, feature, S, target_feature):
+    def is_on_causal_path(self, feature, S, target_feature) -> bool:
         """Check if feature is on any causal path from S to target_feature."""
         if target_feature not in self.causal_paths:
             return False
         path_features = self.causal_paths[target_feature]
         return feature in path_features
 
-    def compute_modified_shap_proba(self, x, is_classifier=False):
+    def compute_modified_shap_proba(self, x, is_classifier=False) -> Dict[str, float]:
         """TreeSHAP-inspired computation using causal paths and dynamic programming."""
+        if self.gamma is None:
+            raise ValueError(
+                "Must call load_causal_strengths before computing SHAP values"
+            )
         features = [col for col in self.data.columns if col != self.target_variable]
         phi_causal = {feature: 0.0 for feature in features}
 
@@ -300,7 +311,7 @@ class FastCausalSHAP:
                     if node == feature:
                         continue
 
-                    new_m_values = defaultdict(float)
+                    new_m_values: defaultdict[int, float] = defaultdict(float)
                     for m, val in m_values.items():
                         new_m_values[m + 1] += val
                         new_m_values[m] += val
@@ -320,7 +331,7 @@ class FastCausalSHAP:
 
         return phi_causal
 
-    def _compute_path_delta_v(self, feature, path, m, x, is_classifier):
+    def _compute_path_delta_v(self, feature, path, m, x, is_classifier) -> float:
         """Compute Δv for a causal path using precomputed expectations."""
         S = [n for n in path[:m] if n != feature]
         x_S = {n: x[n] for n in S if n in x}
