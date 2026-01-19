@@ -1,4 +1,5 @@
 import json
+import logging
 from collections import defaultdict
 from math import factorial
 from typing import Any, Dict, List, Optional, Tuple
@@ -8,9 +9,32 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
+logger = logging.getLogger(__name__)
+
 
 class FastCausalSHAP:
     def __init__(self, data: pd.DataFrame, model: Any, target_variable: str) -> None:
+        if not isinstance(data, pd.DataFrame):
+            raise TypeError("data must be a pandas DataFrame")
+
+        if data.empty:
+            raise ValueError("data must not be empty")
+
+        if target_variable not in data.columns:
+            raise ValueError(
+                f"target_variable '{target_variable}' not found in data columns. "
+                f"Available columns: {list(data.columns)}"
+            )
+
+        if not hasattr(model, "predict"):
+            raise AttributeError("model must have a predict method")
+
+        if not hasattr(model, "feature_names_in_"):
+            raise AttributeError(
+                "model must have 'feature_names_in_' attribute. "
+                "Ensure the model has been fitted before passing it."
+            )
+
         self.data: pd.DataFrame = data
         self.model: Any = model
         self.gamma: Optional[Dict[str, float]] = None
@@ -95,8 +119,27 @@ class FastCausalSHAP:
                 self.causal_paths[feature] = []
 
     def load_causal_strengths(self, json_file_path: str) -> Dict[str, float]:
-        with open(json_file_path, "r") as f:
-            causal_effects_list = json.load(f)
+        """Load causal strengths from JSON file and compute gamma values."""
+        if not isinstance(json_file_path, str):
+            raise TypeError("json_file_path must be a string")
+
+        import os
+
+        if not os.path.isfile(json_file_path):
+            raise ValueError("json_file_path must be a valid file path")
+
+        try:
+            with open(json_file_path, "r") as f:
+                causal_effects_list = json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON file: {json_file_path}. Error: {e}")
+
+        if not isinstance(causal_effects_list, list):
+            raise ValueError(
+                f"JSON file must has a list, got {type(causal_effects_list).__name__}"
+            )
+        if not causal_effects_list:
+            raise ValueError("JSON file contains an empty list")
 
         G = nx.DiGraph()
         nodes = list(self.data.columns)
@@ -115,9 +158,11 @@ class FastCausalSHAP:
 
         removed_edges = self.remove_cycles()
         if removed_edges:
-            print(f"Removed {len(removed_edges)} edges to make the graph acyclic:")
+            logger.info(
+                f"Removed {len(removed_edges)} edges to make the graph acyclic:"
+            )
             for source, target, weight in removed_edges:
-                print(f"  {source} -> {target} (weight: {weight})")
+                logger.info(f"  {source} -> {target} (weight: {weight})")
 
         self._compute_feature_depths()
         self._compute_causal_paths()
@@ -220,7 +265,7 @@ class FastCausalSHAP:
         return sampled_value
 
     def compute_v_do(
-        self, S: List[str], x_S: Dict[str, float], is_classifier=False
+        self, S: List[str], x_S: Dict[str, float], is_classifier: bool = False
     ) -> float:
         """Compute interventional expectations with caching."""
         cache_key = (
@@ -269,13 +314,25 @@ class FastCausalSHAP:
         return feature in path_features
 
     def compute_modified_shap_proba(
-        self, x: pd.Series, is_classifier=False
+        self, x: pd.Series, is_classifier: bool = False
     ) -> Dict[str, float]:
         """TreeSHAP-inspired computation using causal paths and dynamic programming."""
         if self.gamma is None:
             raise ValueError(
                 "Must call load_causal_strengths before computing SHAP values"
             )
+        if not isinstance(x, pd.Series):
+            raise TypeError(f"x must be a pandas Series, got {type(x).__name__}")
+
+        # validate x contains required features
+        required_features = self.model.feature_names_in_
+        missing_features = set(required_features) - set(x.index)
+        if missing_features:
+            raise ValueError(
+                f"x is missing required features: {missing_features}. "
+                f"Required features: {list(required_features)}"
+            )
+
         features = [col for col in self.data.columns if col != self.target_variable]
         phi_causal = {feature: 0.0 for feature in features}
 
