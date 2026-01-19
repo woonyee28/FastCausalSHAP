@@ -1,0 +1,61 @@
+site_name: Fast Causal SHAP
+site_description: Efficient and interpretable SHAP value computation for causal inference
+site_author: woonyee28
+site_url: https://woonyee28.github.io/FastCausalSHAP/
+
+repo_name: woonyee28/FastCausalSHAP
+repo_url: https://github.com/woonyee28/FastCausalSHAP
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_signature_annotations: true
+            separate_signature: true
+            merge_init_into_class: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/woonyee28/FastCausalSHAP
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/fast-causal-shap/
