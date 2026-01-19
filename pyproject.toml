@@ -19,6 +19,21 @@ dependencies = [
     "scikit-learn>=0.24.0",
 ]
 
+[project.optional-dependencies] 
+dev = [
+    "pytest>=6.0",
+    "black>=21.0",
+    "flake8>=3.8",
+    "mypy>=0.800",
+    "isort>=5.0",
+    "pytest-cov>=2.0",
+    "pre-commit>=2.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312', 'py313', 'py314']
+
 [project.urls]
 Homepage = "https://github.com/woonyee28/CausalSHAP"
 Issues = "https://github.com/woonyee28/CausalSHAP/issues"
