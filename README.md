@@ -55,10 +55,10 @@ Format of the Causal_Effect.json:
 ]
 ```
 
-Fast Causal SHAP supports integration with structural algorithms such as:        
-1. Peter-Clarke (PC) Algorithm     
-2. IDA Algorithm     
-3. Fast Causal Inference (FCI) Algorithm    
+Fast Causal SHAP supports integration with structural algorithms such as:
+1. Peter-Clarke (PC) Algorithm
+2. IDA Algorithm
+3. Fast Causal Inference (FCI) Algorithm
 You can find example R code for these integrations here: [FastCausalSHAP R code examples](https://github.com/woonyee28/CausalSHAP/tree/main/code/r)
 
 
