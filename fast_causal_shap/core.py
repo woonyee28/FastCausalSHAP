@@ -10,7 +10,7 @@ from sklearn.linear_model import LinearRegression
 
 
 class FastCausalSHAP:
-    def __init__(self, data, model, target_variable) -> None:
+    def __init__(self, data: pd.DataFrame, model: Any, target_variable: str) -> None:
         self.data: pd.DataFrame = data
         self.model: Any = model
         self.gamma: Optional[Dict[str, float]] = None
@@ -94,7 +94,7 @@ class FastCausalSHAP:
             except nx.NetworkXNoPath:
                 self.causal_paths[feature] = []
 
-    def load_causal_strengths(self, json_file_path) -> Dict[str, float]:
+    def load_causal_strengths(self, json_file_path: str) -> Dict[str, float]:
         with open(json_file_path, "r") as f:
             causal_effects_list = json.load(f)
 
@@ -166,7 +166,7 @@ class FastCausalSHAP:
             except nx.NetworkXNoPath:
                 continue
 
-    def get_topological_order(self, S) -> List[str]:
+    def get_topological_order(self, S: List[str]) -> List[str]:
         """Returns the topological order of variables after intervening on subset S."""
         if self.ida_graph is None:
             return []
@@ -183,17 +183,19 @@ class FastCausalSHAP:
 
         return order
 
-    def get_parents(self, feature) -> List[str]:
+    def get_parents(self, feature: str) -> List[str]:
         """Returns the parent features for a given feature in the causal graph."""
         if self.ida_graph is None:
             return []
         return list(self.ida_graph.predecessors(feature))
 
-    def sample_marginal(self, feature) -> float:
+    def sample_marginal(self, feature: str) -> float:
         """Sample a value from the marginal distribution of the specified feature."""
         return self.data[feature].sample(1).iloc[0]
 
-    def sample_conditional(self, feature, parent_values) -> float:
+    def sample_conditional(
+        self, feature: str, parent_values: Dict[str, float]
+    ) -> float:
         """Sample a value for a feature conditioned on its parent features."""
         effective_parents = [
             p for p in self.get_parents(feature) if p != self.target_variable
@@ -217,7 +219,9 @@ class FastCausalSHAP:
         sampled_value = np.random.normal(mean, std)
         return sampled_value
 
-    def compute_v_do(self, S, x_S, is_classifier=False) -> float:
+    def compute_v_do(
+        self, S: List[str], x_S: Dict[str, float], is_classifier=False
+    ) -> float:
         """Compute interventional expectations with caching."""
         cache_key = (
             frozenset(S),
@@ -257,14 +261,16 @@ class FastCausalSHAP:
         self.path_cache[cache_key] = result
         return result
 
-    def is_on_causal_path(self, feature, S, target_feature) -> bool:
+    def is_on_causal_path(self, feature: str, target_feature: str) -> bool:
         """Check if feature is on any causal path from S to target_feature."""
         if target_feature not in self.causal_paths:
             return False
         path_features = self.causal_paths[target_feature]
         return feature in path_features
 
-    def compute_modified_shap_proba(self, x, is_classifier=False) -> Dict[str, float]:
+    def compute_modified_shap_proba(
+        self, x: pd.Series, is_classifier=False
+    ) -> Dict[str, float]:
         """TreeSHAP-inspired computation using causal paths and dynamic programming."""
         if self.gamma is None:
             raise ValueError(
@@ -331,7 +337,9 @@ class FastCausalSHAP:
 
         return phi_causal
 
-    def _compute_path_delta_v(self, feature, path, m, x, is_classifier) -> float:
+    def _compute_path_delta_v(
+        self, feature: str, path: List[str], m: int, x: pd.Series, is_classifier: bool
+    ) -> float:
         """Compute Δv for a causal path using precomputed expectations."""
         S = [n for n in path[:m] if n != feature]
         x_S = {n: x[n] for n in S if n in x}
